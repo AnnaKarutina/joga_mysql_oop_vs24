@@ -14,4 +14,9 @@ router.get('/article/:slug', (req, res) => {
     articleController.getArticleBySlug(req, res);
 });
 
+// POST / - create new article
+router.post('/article/create', (req, res) => {
+    articleController.createNewArticle(req, res);
+});
+
 module.exports = router;
