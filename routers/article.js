@@ -19,4 +19,9 @@ router.post('/article/create', (req, res) => {
     articleController.createNewArticle(req, res);
 });
 
+// Ülesanne 1: uuendamine (kasuta PUT)
+router.put('/article/edit/:id', (req, res) => {
+    articleController.updateArticle(req, res)
+});
+
 module.exports = router;
