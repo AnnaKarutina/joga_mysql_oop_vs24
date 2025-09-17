@@ -1,12 +1,14 @@
-const ArticleModel = require('../models/article');
 const articleDbModel = require('../models/article');
+const authorDbModel = require('../models/author');
 const articleModel = new articleDbModel();
+const authorModel = new authorDbModel();
 
 class articleController {
     async getAllArticles(req, res) {
         try {
             const articles = await articleModel.findAll();
-            res.status(201).json({articles: articles } );
+            // res.status(201).json({articles: articles } );
+            res.render('index', { articles: articles });
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch articles' });
         }
@@ -15,9 +17,29 @@ class articleController {
     async getArticleBySlug(req, res) {
         try {
             const article = await articleModel.findOne(req.params.slug);
-            res.status(201).json({article: article } );
+            const author = await authorModel.findById(article.author_id);
+            article.author = author;
+            // res.status(201).json({article: article } );
+            res. render('article', { article: article });
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch article data' });
+        }
+    }
+
+    async getAdminArticles(req, res) {
+        try {
+            const articles = await articleModel.findAll();
+            res.render('admin/view', { articles: articles });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to fetch articles' });
+        }
+    }
+
+    async getCreateNewArticle(req, res) {
+        try {
+            res.render('admin/create');
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to load create article form' });
         }
     }
 
@@ -33,12 +55,34 @@ class articleController {
             };
             const insertId = await articleModel.create(newArticle);
             const createdArticle = await articleModel.findById(insertId);
-            res.status(201).json({ article: createdArticle });
+            // res.status(201).json({ article: createdArticle });
+            res.redirect('/admin');
             
         } catch (error) {
             res.status(500).json({ error: 'Failed to create article' });
         }
     }
+
+    async getEditArticle(req, res) {
+        try {
+            const articleId = req.params.id;
+            const article = await articleModel.findById(articleId);
+            if (!article) {
+                return res.status(404).json({ message: 'Article not found' });
+            }
+            if(article.author_id !== null){
+                const author = await authorModel.findById(article.author_id); // Assuming this method exists to fetch author data
+                article.author = author;
+            } else {
+                const authors = await authorModel.findAll(); // Assuming this method exists to fetch authors
+                article.authors = authors;
+            }           
+            res.render('admin/edit', { article: article });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
+    }   
 
     async updateArticle(req, res) {
         try {
@@ -47,10 +91,11 @@ class articleController {
 
             await articleModel.update(articleId, articleData);
 
-            res.status(200).json({
+            /* res.status(200).json({
                 message: `Article with ID ${articleId} updated successfully.`,
                 article: { id: articleId, ...articleData }
-            });
+            }); */
+            res.redirect('/admin');
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Internal server error' });
@@ -67,9 +112,10 @@ class articleController {
                 return res.status(404).json({ message: 'Article not found' });
             }
 
-            res.status(200).json({
+            /* res.status(200).json({
                 message: `Article with ID ${articleId} deleted successfully.`
-            });
+            }); */
+            res.redirect('/admin');
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: 'Internal server error' });
