@@ -4,8 +4,10 @@ const router = express.Router();
 const articleControllerClass  = require('../../controllers/admin/article');
 const articleController = new articleControllerClass();
 
+const { authRequired, requireRole } = require('../../middlewares/auth');
+
 // GET /admin - get all articles for admin view
-router.get('/', (req, res) => {
+router.get('/', authRequired, requireRole('admin'), (req, res) => {
     articleController.getAdminArticles(req, res);
 });
 

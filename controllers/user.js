@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const UserModel = require('../models/user');
+const RoleModel = require('../models/role');
 const userModel = new UserModel();
+const roleModel = new RoleModel();
 
 class UserController {
     async register(req, res) {
@@ -23,11 +25,22 @@ class UserController {
             
             const registeredId = await userModel.create(userData);
 
+            const userRoles = await roleModel.findById(registeredId);
+            if (!userRoles || userRoles.length === 0) {
+                if(!req.body.role_id) {
+                const defaultRole = await userModel.setRole(registeredId, 1)
+                } else {
+                const assignedRole = await userModel.setRole(registeredId, req.body.role_id);
+                }
+            }; // Assuming '2' is the ID for the default role);
+
             if (registeredId) {
                 const user = await userModel.findById(registeredId);
+                const roles = await userModel.getRoles(registeredId);
                 req.session.user = {
                     username: user.username,
-                    user_id: user.id
+                    user_id: user.id,
+                    roles: roles
                 };
                 res.json({ 
                     message: 'New user is registered', 
@@ -46,10 +59,12 @@ class UserController {
             if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
+            const roles = await userModel.getRoles(user.id);
 
             req.session.user = {
                 username: user.username,
-                user_id: user.id
+                user_id: user.id,
+                roles: roles
             };
 
             res.json({ 
